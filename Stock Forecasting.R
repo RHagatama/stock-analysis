@@ -1,29 +1,22 @@
 library(tidyverse)  #Mandatory library
+library(fpp2)       #Tools forecasting
 library(lubridate)  #Manipulate date object
-library(fpp2)       #Forecasting tools
 library(quantmod)   #Get historical stock price
 library(xts)        #Extended time series
-library(ggpubr)     #Visualization tools
 library(smooth)     #Forecasting method
 library(MLmetrics)  #Make model evaluation
 library(tseries)    #For stationary test
 
 # Set Parameter ----
-kode_saham <- c("BBRI.JK", "TLKM.JK", "TINS.JK", "ANTM.JK")
-mulai <- "2006/01/01"
-akhir <- "2021/05/01"
+kode_saham <- c()
+mulai <- "2011/01/01"
+akhir <- "2021/06/04"
 
 # Get Dataset
 portofolio <- lapply(
   kode_saham, 
   function(x) {
-    getSymbols(
-      x, 
-      from = mulai, 
-      to = akhir, 
-      periodicity = "monthly", 
-      auto.assign = FALSE
-    )
+    getSymbols(x, from = mulai, to = akhir, periodicity = "monthly", auto.assign = FALSE)
   }
 )
 
@@ -49,8 +42,8 @@ autoplot(portofolio$avg) +
   ) 
 
 # Set Data and Period for Forecasting ----
-ntest <- 24
-npred <- 12
+ntest <- 6
+npred <- 2
 ntrain <- length(portofolio$avg) - ntest
 
 # Partisi Data
@@ -73,20 +66,44 @@ test.data <- ts(
 
 # Fit Model
 fit1 <- auto.arima(train.data)
-fit1
+summary(fit1)
 
-fit2 <- ets(train.data, restrict = FALSE, allow.multiplicative.trend = F)
-fit2
+fit2 <- ets(train.data, model = "ZAZ",restrict = FALSE, allow.multiplicative.trend = T)
+summary(fit2)
+
+dfit1 <- mstl(train.data) |>
+  seasadj() |>
+  auto.arima()
+summary(dfit1)
+
+dfit2 <- mstl(train.data) |>
+  seasadj() |>
+  ets(model = "ZAZ",restrict = FALSE, allow.multiplicative.trend = T)
+summary(dfit2)
 
 # Visualisasi Forecasting
 autoplot(data.ts) +
   autolayer(forecast(fit1, h = ntest+npred), series = "ARIMA", PI = FALSE) +
   autolayer(forecast(fit2, h = ntest+npred), series = "ETS", PI = FALSE) +
+  autolayer(forecast(dfit1, h = ntest+npred), series = "STL+ARIMA", PI = FALSE) +
+  autolayer(forecast(dfit2, h = ntest+npred), series = "STL+ETS", PI = FALSE) +
+  geom_vline(
+    alpha = 0.5,
+    linetype = "longdash",
+    xintercept = c(
+      year(as.Date(mulai)+months(ntrain-1)) + (month(as.Date(mulai)+months(ntrain-1))/12),
+      year(as.Date(akhir)-months(1)) + (month(as.Date(akhir)-months(1))/12)
+    )
+  ) +
+  scale_x_continuous(n.breaks = 12) +
   labs(x = "Period", y = "Price")
 
 # Evaluasi Model
 c.matrix <- list(
   fit1.acc = accuracy(forecast(fit1, npred), test.data),
-  fit2.acc = accuracy(forecast(fit2, npred), test.data)
+  fit2.acc = accuracy(forecast(fit2, npred), test.data),
+  fit3.acc = accuracy(forecast(dfit1, npred), test.data),
+  fit4.acc = accuracy(forecast(dfit2, npred), test.data)
 )
 c.matrix
+
