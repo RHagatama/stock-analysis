@@ -8,7 +8,7 @@ library(MLmetrics)  #Make model evaluation
 library(tseries)    #For stationary test
 
 # Set Parameter ----
-kode_saham <- c()
+kode_saham <- c("^JKSE")
 mulai <- "2011/01/01"
 akhir <- "2021/06/04"
 
@@ -16,7 +16,7 @@ akhir <- "2021/06/04"
 portofolio <- lapply(
   kode_saham, 
   function(x) {
-    getSymbols(x, from = mulai, to = akhir, periodicity = "monthly", auto.assign = FALSE)
+    getSymbols(x, from = mulai, to = akhir, periodicity = "monthly", auto.assign = F)
   }
 )
 
@@ -68,7 +68,7 @@ test.data <- ts(
 fit1 <- auto.arima(train.data)
 summary(fit1)
 
-fit2 <- ets(train.data, model = "ZAZ",restrict = FALSE, allow.multiplicative.trend = T)
+fit2 <- ets(train.data, "ZAZ", damped = F, restrict = F, allow.multiplicative.trend = T)
 summary(fit2)
 
 dfit1 <- mstl(train.data) |>
@@ -78,15 +78,15 @@ summary(dfit1)
 
 dfit2 <- mstl(train.data) |>
   seasadj() |>
-  ets(model = "ZAZ",restrict = FALSE, allow.multiplicative.trend = T)
+  ets(model = "ZAZ", damped = F, restrict = F, allow.multiplicative.trend = T)
 summary(dfit2)
 
 # Visualisasi Forecasting
 autoplot(data.ts) +
-  autolayer(forecast(fit1, h = ntest+npred), series = "ARIMA", PI = FALSE) +
-  autolayer(forecast(fit2, h = ntest+npred), series = "ETS", PI = FALSE) +
-  autolayer(forecast(dfit1, h = ntest+npred), series = "STL+ARIMA", PI = FALSE) +
-  autolayer(forecast(dfit2, h = ntest+npred), series = "STL+ETS", PI = FALSE) +
+  autolayer(forecast(fit1, h = ntest+npred), series = "ARIMA", PI = F) +
+  autolayer(forecast(fit2, h = ntest+npred), series = "ETS", PI = F) +
+  autolayer(forecast(dfit1, h = ntest+npred), series = "STL+ARIMA", PI = F) +
+  autolayer(forecast(dfit2, h = ntest+npred), series = "STL+ETS", PI = F) +
   geom_vline(
     alpha = 0.5,
     linetype = "longdash",
