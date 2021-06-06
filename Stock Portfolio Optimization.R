@@ -3,9 +3,9 @@ library(quantmod)            #Get stock data
 library(PortfolioAnalytics)  #Optimize portfolio
 library(derivmkts)           #Calculate volatility
 
-kode_saham <- c("BBRI.JK", "TLKM.JK", "ADRO.JK", "TINS.JK")
+kode_saham <- c()
 mulai <- "2011/01/01"
-akhir <- "2021/06/03"
+akhir <- "2021/06/04"
 
 # Get Dataset
 portofolio <- lapply(
@@ -29,13 +29,14 @@ last(portofolio, 5)
 s.return <- Return.calculate(portofolio)[-1]
 head(s.return)
 
-p.return <- Return.portfolio(s.return)
+p.return <- Return.portfolio(s.return, verbose = T)
 head(p.return)
 
-p.return.rebalanced <- Return.portfolio(s.return, rebalance_on = "months")
+p.return.rebalanced <- Return.portfolio(s.return, rebalance_on = "months", verbose = T)
 head(p.return.rebalanced)
 
 p.return.comparison <- cbind(p.return, p.return.rebalanced)
+colnames(p.return.comparison) <- c("non-rebalanced", "rebalanced")
 head(p.return.comparison)
 
 table.AnnualizedReturns(p.return.comparison, Rf = 0.1/252)
@@ -64,14 +65,16 @@ meanvar.op
 minvar.rt <- Return.portfolio(
   R = s.return, 
   weights = extractWeights(minvar.op), 
-  rebalance_on = "months"
+  rebalance_on = "months",
+  verbose = T
 )
 head(minvar.rt)
 
 meanvar.rt <- Return.portfolio(
   R = s.return, 
   weights = extractWeights(meanvar.op), 
-  rebalance_on = "months"
+  rebalance_on = "months",
+  verbose = T
 )
 head(meanvar.rt)
 
