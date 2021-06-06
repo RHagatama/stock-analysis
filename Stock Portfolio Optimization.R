@@ -7,7 +7,7 @@ kode_saham <- c()
 mulai <- "2011/01/01"
 akhir <- "2021/06/04"
 
-# Get Dataset
+## Get Dataset ----
 portofolio <- lapply(
   kode_saham, 
   function(x) {
@@ -16,8 +16,6 @@ portofolio <- lapply(
 ) 
 
 portofolio <- na.omit(portofolio)
-
-# Prapemrosesan Data
 portofolio <- lapply(portofolio, Ad)
 portofolio <- do.call(merge, portofolio)
 
@@ -25,7 +23,7 @@ class(portofolio)
 first(portofolio, 5)
 last(portofolio, 5)
 
-# Menghitung Return Saham dan Portofolio
+## Menghitung Return Saham dan Portofolio ----
 s.return <- Return.calculate(portofolio)[-1]
 head(s.return)
 
@@ -41,7 +39,8 @@ head(p.return.comparison)
 
 table.AnnualizedReturns(p.return.comparison, Rf = 0.1/252)
 
-# Optimisasi Portofolio
+## Optimisasi Portofolio ----
+# Spesifikasi optimasi
 p.opt <- portfolio.spec(colnames(s.return)) |>
   add.constraint(type = "full_investment") |>
   add.constraint(type = "long_only") |>
@@ -56,6 +55,7 @@ p.meanvar <- p.minvar |>
   add.objective(type = "return", name = "mean")
 p.meanvar
 
+# Menghitung hasil optimisasi
 minvar.op <- optimize.portfolio(s.return, portfolio = p.minvar, optimize_method = "random")
 minvar.op
 
